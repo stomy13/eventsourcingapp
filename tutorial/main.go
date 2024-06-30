@@ -11,9 +11,9 @@ import (
 func main() {
 	studentDatabase := student.NewDatabase()
 
-	studentId := uuid.NewString()
+	studentId := student.StudentId(uuid.NewString())
 	studentCreated := student.StudentCreated{
-		StudentId:   student.StudentId(studentId),
+		StudentId:   studentId,
 		FullName:    "John Doe",
 		Email:       "john.doe@example.com",
 		DateOfBirth: time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC),
@@ -24,7 +24,7 @@ func main() {
 	studentDatabase.Append(studentCreated)
 
 	studentEnrolled := student.StudentEnrolled{
-		StudentId: student.StudentId(studentId),
+		StudentId: studentId,
 		CourseId:  "course-1",
 		Event: student.Event{
 			CreatedAtUtc: time.Now().UTC(),
@@ -33,7 +33,7 @@ func main() {
 	studentDatabase.Append(studentEnrolled)
 
 	studentUpdated := student.StudentUpdated{
-		StudentId: student.StudentId(studentId),
+		StudentId: studentId,
 		Email:     "john.doe.new@example.com",
 		Event: student.Event{
 			CreatedAtUtc: time.Now().UTC(),
@@ -41,6 +41,9 @@ func main() {
 	}
 	studentDatabase.Append(studentUpdated)
 
-	student := studentDatabase.GetStudent(student.StudentId(studentId))
+	student := studentDatabase.GetStudent(studentId)
 	fmt.Println(student)
+
+	studentView := studentDatabase.GetStudentView(studentId)
+	fmt.Println(studentView)
 }
