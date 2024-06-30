@@ -12,6 +12,10 @@ type Student struct {
 
 type StudentId string
 
+func (s StudentId) String() string {
+	return string(s)
+}
+
 func (s *Student) Apply(event IEvent) {
 	event.apply(s)
 }

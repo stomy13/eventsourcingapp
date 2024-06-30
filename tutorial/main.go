@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"time"
 	"tutorial/student"
@@ -9,7 +10,12 @@ import (
 )
 
 func main() {
-	studentDatabase := student.NewInMemoryDatabase()
+	useDynamoDBDatabase()
+}
+
+func useDynamoDBDatabase() {
+	ctx := context.Background()
+	studentDatabase := student.NewDynamoDBDatabase(ctx)
 
 	studentId := student.StudentId(uuid.NewString())
 	studentCreated := student.StudentCreated{
@@ -17,11 +23,9 @@ func main() {
 		FullName:    "John Doe",
 		Email:       "john.doe@example.com",
 		DateOfBirth: time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC),
-		Event: student.Event{
-			CreatedAtUtc: time.Now().UTC(),
-		},
+		Event:       student.NewEvent(studentId),
 	}
-	studentDatabase.Append(studentCreated)
+	studentDatabase.Append(ctx, studentCreated)
 
 	studentEnrolled := student.StudentEnrolled{
 		StudentId: studentId,
@@ -30,7 +34,7 @@ func main() {
 			CreatedAtUtc: time.Now().UTC(),
 		},
 	}
-	studentDatabase.Append(studentEnrolled)
+	studentDatabase.Append(ctx, studentEnrolled)
 
 	studentUpdated := student.StudentUpdated{
 		StudentId: studentId,
@@ -39,7 +43,40 @@ func main() {
 			CreatedAtUtc: time.Now().UTC(),
 		},
 	}
-	studentDatabase.Append(studentUpdated)
+	studentDatabase.Append(ctx, studentUpdated)
+}
+
+func useInMemoryDatabase() {
+	ctx := context.Background()
+	studentDatabase := student.NewInMemoryDatabase()
+
+	studentId := student.StudentId(uuid.NewString())
+	studentCreated := student.StudentCreated{
+		StudentId:   studentId,
+		FullName:    "John Doe",
+		Email:       "john.doe@example.com",
+		DateOfBirth: time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC),
+		Event:       student.NewEvent(studentId),
+	}
+	studentDatabase.Append(ctx, studentCreated)
+
+	studentEnrolled := student.StudentEnrolled{
+		StudentId: studentId,
+		CourseId:  "course-1",
+		Event: student.Event{
+			CreatedAtUtc: time.Now().UTC(),
+		},
+	}
+	studentDatabase.Append(ctx, studentEnrolled)
+
+	studentUpdated := student.StudentUpdated{
+		StudentId: studentId,
+		Email:     "john.doe.new@example.com",
+		Event: student.Event{
+			CreatedAtUtc: time.Now().UTC(),
+		},
+	}
+	studentDatabase.Append(ctx, studentUpdated)
 
 	student := studentDatabase.GetStudent(studentId)
 	fmt.Println(student)

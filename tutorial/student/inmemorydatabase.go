@@ -1,5 +1,7 @@
 package student
 
+import "context"
+
 var _ Database = (*InMemoryDatabase)(nil)
 
 type InMemoryDatabase struct {
@@ -14,7 +16,7 @@ func NewInMemoryDatabase() *InMemoryDatabase {
 	}
 }
 
-func (d *InMemoryDatabase) Append(event IEvent) {
+func (d *InMemoryDatabase) Append(ctx context.Context, event IEvent) error {
 	events := d.events[event.StreamId()]
 	d.events[event.StreamId()] = append(events, event)
 
@@ -22,6 +24,8 @@ func (d *InMemoryDatabase) Append(event IEvent) {
 	if student != nil {
 		d.students[event.StreamId()] = student
 	}
+
+	return nil
 }
 
 func (d *InMemoryDatabase) GetStudent(studentId StudentId) *Student {

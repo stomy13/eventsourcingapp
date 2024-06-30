@@ -1,6 +1,7 @@
 package student
 
 import (
+	"encoding/json"
 	"slices"
 	"time"
 
@@ -9,11 +10,24 @@ import (
 
 type IEvent interface {
 	StreamId() StudentId
+	Sk() string
 	apply(*Student)
+	Json() (string, error)
 }
 
 type Event struct {
 	CreatedAtUtc time.Time
+}
+
+func NewEvent(studentId StudentId) Event {
+	now := time.Now().UTC()
+	return Event{
+		CreatedAtUtc: now,
+	}
+}
+
+func (e Event) Sk() string {
+	return e.CreatedAtUtc.Format(time.RFC3339Nano)
 }
 
 type StudentCreated struct {
@@ -33,6 +47,11 @@ func (e StudentCreated) apply(s *Student) {
 	s.FullName = e.FullName
 	s.Email = e.Email
 	s.DateOfBirth = e.DateOfBirth
+}
+
+func (e StudentCreated) Json() (string, error) {
+	b, err := json.Marshal(e)
+	return string(b), err
 }
 
 type StudentUpdated struct {
@@ -59,6 +78,11 @@ func (e StudentUpdated) apply(s *Student) {
 	}
 }
 
+func (e StudentUpdated) Json() (string, error) {
+	b, err := json.Marshal(e)
+	return string(b), err
+}
+
 type StudentDeleted struct {
 	Event
 	StudentId StudentId
@@ -70,6 +94,11 @@ func (e StudentDeleted) StreamId() StudentId {
 
 func (e StudentDeleted) apply(s *Student) {
 	// TBI
+}
+
+func (e StudentDeleted) Json() (string, error) {
+	b, err := json.Marshal(e)
+	return string(b), err
 }
 
 type StudentEnrolled struct {
@@ -88,6 +117,11 @@ func (e StudentEnrolled) apply(s *Student) {
 	}
 }
 
+func (e StudentEnrolled) Json() (string, error) {
+	b, err := json.Marshal(e)
+	return string(b), err
+}
+
 type StudentUnEnrolled struct {
 	Event
 	StudentId StudentId
@@ -102,4 +136,9 @@ func (e StudentUnEnrolled) apply(s *Student) {
 	s.CoursesIds = lo.Filter(s.CoursesIds, func(courseId string, index int) bool {
 		return courseId != e.CourseId
 	})
+}
+
+func (e StudentUnEnrolled) Json() (string, error) {
+	b, err := json.Marshal(e)
+	return string(b), err
 }
