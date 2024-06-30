@@ -10,12 +10,12 @@ type Student struct {
 	CoursesIds  []string
 }
 
+func (s *Student) Apply(event IEvent) {
+	event.apply(s)
+}
+
 type StudentId string
 
 func (s StudentId) String() string {
 	return string(s)
-}
-
-func (s *Student) Apply(event IEvent) {
-	event.apply(s)
 }
