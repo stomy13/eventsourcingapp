@@ -1,10 +1,17 @@
 package student
 
+import "time"
+
 type Student struct {
-	StudentID   StudentID
+	Id          StudentId
 	FullName    string
 	Email       string
-	DateOfBirth string
+	DateOfBirth time.Time
+	CoursesIds  []string
 }
 
-type StudentID string
+type StudentId string
+
+func (s *Student) Apply(event IEvent) {
+	event.apply(s)
+}
