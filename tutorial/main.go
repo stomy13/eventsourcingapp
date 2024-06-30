@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	studentDatabase := student.NewDatabase()
+	studentDatabase := student.NewInMemoryDatabase()
 
 	studentId := student.StudentId(uuid.NewString())
 	studentCreated := student.StudentCreated{
