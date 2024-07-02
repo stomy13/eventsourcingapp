@@ -45,7 +45,6 @@ func NewDynamoDBDatabase(ctx context.Context) *DynamoDBDatabase {
 }
 
 func (d *DynamoDBDatabase) Append(ctx context.Context, event IEvent) error {
-	// TODO: add event name
 	jsonStr, err := event.Json()
 	if err != nil {
 		return err
