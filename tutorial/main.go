@@ -23,25 +23,21 @@ func useDynamoDBDatabase() {
 		FullName:    "John Doe",
 		Email:       "john.doe@example.com",
 		DateOfBirth: time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC),
-		Event:       student.NewEvent(studentId),
+		Event:       student.NewEvent("StudentCreated"),
 	}
 	studentDatabase.Append(ctx, studentCreated)
 
 	studentEnrolled := student.StudentEnrolled{
 		StudentId: studentId,
 		CourseId:  "course-1",
-		Event: student.Event{
-			CreatedAtUtc: time.Now().UTC(),
-		},
+		Event:     student.NewEvent("StudentEnrolled"),
 	}
 	studentDatabase.Append(ctx, studentEnrolled)
 
 	studentUpdated := student.StudentUpdated{
 		StudentId: studentId,
 		Email:     "john.doe.new@example.com",
-		Event: student.Event{
-			CreatedAtUtc: time.Now().UTC(),
-		},
+		Event:     student.NewEvent("StudentUpdated"),
 	}
 	studentDatabase.Append(ctx, studentUpdated)
 }
@@ -56,25 +52,21 @@ func useInMemoryDatabase() {
 		FullName:    "John Doe",
 		Email:       "john.doe@example.com",
 		DateOfBirth: time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC),
-		Event:       student.NewEvent(studentId),
+		Event:       student.NewEvent("StudentCreated"),
 	}
 	studentDatabase.Append(ctx, studentCreated)
 
 	studentEnrolled := student.StudentEnrolled{
 		StudentId: studentId,
 		CourseId:  "course-1",
-		Event: student.Event{
-			CreatedAtUtc: time.Now().UTC(),
-		},
+		Event:     student.NewEvent("StudentEnrolled"),
 	}
 	studentDatabase.Append(ctx, studentEnrolled)
 
 	studentUpdated := student.StudentUpdated{
 		StudentId: studentId,
 		Email:     "john.doe.new@example.com",
-		Event: student.Event{
-			CreatedAtUtc: time.Now().UTC(),
-		},
+		Event:     student.NewEvent("StudentUpdated"),
 	}
 	studentDatabase.Append(ctx, studentUpdated)
 

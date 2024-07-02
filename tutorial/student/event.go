@@ -16,12 +16,14 @@ type IEvent interface {
 }
 
 type Event struct {
+	Type         string
 	CreatedAtUtc time.Time
 }
 
-func NewEvent(studentId StudentId) Event {
+func NewEvent(eventType string) Event {
 	now := time.Now().UTC()
 	return Event{
+		Type:         eventType,
 		CreatedAtUtc: now,
 	}
 }
