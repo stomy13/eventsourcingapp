@@ -95,7 +95,6 @@ func (d *DynamoDBDatabase) GetStudent(ctx context.Context, studentId StudentId) 
 		return nil, errors.New("student not found")
 	}
 
-	student := &Student{}
 	var events []IEvent
 	for _, item := range output.Items {
 		obj := &DynamoDBObject{}
@@ -129,10 +128,14 @@ func (d *DynamoDBDatabase) GetStudent(ctx context.Context, studentId StudentId) 
 			events = append(events, e)
 		}
 	}
+	if len(events) == 0 {
+		return nil, errors.New("student not found")
+	}
+
+	student := &Student{}
 	for _, event := range events {
 		event.apply(student)
 	}
-
 	return student, nil
 }
 
