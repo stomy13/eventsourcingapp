@@ -4,6 +4,6 @@ import "context"
 
 type Database interface {
 	Append(ctx context.Context, event IEvent) error
-	GetStudent(studentId StudentId) *Student
-	GetStudentView(studentId StudentId) *Student
+	GetStudent(ctx context.Context, studentId StudentId) (*Student, error)
+	GetStudentView(ctx context.Context, studentId StudentId) (*Student, error)
 }

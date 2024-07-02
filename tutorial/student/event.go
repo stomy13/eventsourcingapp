@@ -28,6 +28,12 @@ func NewEvent(eventType string) Event {
 	}
 }
 
+func NewEventFromJson(jsonStr string) (Event, error) {
+	event := Event{}
+	err := json.Unmarshal([]byte(jsonStr), &event)
+	return event, err
+}
+
 func (e Event) Sk() string {
 	return e.CreatedAtUtc.Format(time.RFC3339Nano)
 }

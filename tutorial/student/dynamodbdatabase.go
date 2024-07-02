@@ -2,10 +2,13 @@ package student
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"net/url"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	smithyendpoints "github.com/aws/smithy-go/endpoints"
@@ -66,12 +69,74 @@ func (d *DynamoDBDatabase) Append(ctx context.Context, event IEvent) error {
 	return err
 }
 
-func (d *DynamoDBDatabase) GetStudent(studentId StudentId) *Student {
-	// TBI
-	return nil
+type DynamoDBObject struct {
+	Event string
 }
 
-func (d *DynamoDBDatabase) GetStudentView(studentId StudentId) *Student {
+func (obj *DynamoDBObject) ToEvent() Event {
+	event, _ := NewEventFromJson(obj.Event)
+	return event
+}
+
+func (d *DynamoDBDatabase) GetStudent(ctx context.Context, studentId StudentId) (*Student, error) {
+	output, err := d.client.Query(ctx, &dynamodb.QueryInput{
+		TableName:              aws.String(d.tableName),
+		KeyConditionExpression: aws.String("pk = :pk"),
+		ExpressionAttributeValues: map[string]types.AttributeValue{
+			":pk": &types.AttributeValueMemberS{
+				Value: studentId.String(),
+			},
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	if len(output.Items) == 0 {
+		return nil, errors.New("student not found")
+	}
+
+	student := &Student{}
+	var events []IEvent
+	for _, item := range output.Items {
+		obj := &DynamoDBObject{}
+		if err := attributevalue.UnmarshalMap(item, obj); err != nil {
+			return nil, err
+		}
+
+		event, err := NewEventFromJson(obj.Event)
+		if err != nil {
+			return nil, err
+		}
+
+		switch event.Type {
+		case "StudentCreated":
+			e := &StudentCreated{}
+			if err := json.Unmarshal([]byte(obj.Event), e); err != nil {
+				return nil, err
+			}
+			events = append(events, e)
+		case "StudentUpdated":
+			e := &StudentUpdated{}
+			if err := json.Unmarshal([]byte(obj.Event), e); err != nil {
+				return nil, err
+			}
+			events = append(events, e)
+		case "StudentEnrolled":
+			e := &StudentEnrolled{}
+			if err := json.Unmarshal([]byte(obj.Event), e); err != nil {
+				return nil, err
+			}
+			events = append(events, e)
+		}
+	}
+	for _, event := range events {
+		event.apply(student)
+	}
+
+	return student, nil
+}
+
+func (d *DynamoDBDatabase) GetStudentView(ctx context.Context, studentId StudentId) (*Student, error) {
 	// TBI
-	return nil
+	return nil, nil
 }

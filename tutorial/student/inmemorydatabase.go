@@ -1,6 +1,9 @@
 package student
 
-import "context"
+import (
+	"context"
+	"errors"
+)
 
 var _ Database = (*InMemoryDatabase)(nil)
 
@@ -20,7 +23,10 @@ func (d *InMemoryDatabase) Append(ctx context.Context, event IEvent) error {
 	events := d.events[event.StreamId()]
 	d.events[event.StreamId()] = append(events, event)
 
-	student := d.GetStudent(event.StreamId())
+	student, err := d.GetStudent(ctx, event.StreamId())
+	if err != nil {
+		return err
+	}
 	if student != nil {
 		d.students[event.StreamId()] = student
 	}
@@ -28,19 +34,23 @@ func (d *InMemoryDatabase) Append(ctx context.Context, event IEvent) error {
 	return nil
 }
 
-func (d *InMemoryDatabase) GetStudent(studentId StudentId) *Student {
+func (d *InMemoryDatabase) GetStudent(ctx context.Context, studentId StudentId) (*Student, error) {
 	events := d.events[studentId]
 	if len(events) == 0 {
-		return nil
+		return nil, errors.New("student not found")
 	}
 
 	student := &Student{}
 	for _, event := range events {
 		student.Apply(event)
 	}
-	return student
+	return student, nil
 }
 
-func (d *InMemoryDatabase) GetStudentView(studentId StudentId) *Student {
-	return d.students[studentId]
+func (d *InMemoryDatabase) GetStudentView(ctx context.Context, studentId StudentId) (*Student, error) {
+	student := d.students[studentId]
+	if student == nil {
+		return nil, errors.New("student not found")
+	}
+	return student, nil
 }

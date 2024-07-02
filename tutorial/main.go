@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
 	"time"
 	"tutorial/student"
 
@@ -10,7 +11,14 @@ import (
 )
 
 func main() {
-	useDynamoDBDatabase()
+	ctx := context.Background()
+	studentDatabase := student.NewDynamoDBDatabase(ctx)
+	student, err := studentDatabase.GetStudent(ctx, "d97a1ffc-a433-45d5-b44b-28c83a1ee131")
+	if err != nil {
+		log.Fatalln(err)
+	}
+	fmt.Println(student)
+	// useDynamoDBDatabase()
 }
 
 func useDynamoDBDatabase() {
@@ -70,9 +78,15 @@ func useInMemoryDatabase() {
 	}
 	studentDatabase.Append(ctx, studentUpdated)
 
-	student := studentDatabase.GetStudent(studentId)
+	student, err := studentDatabase.GetStudent(ctx, studentId)
+	if err != nil {
+		log.Fatalln(err)
+	}
 	fmt.Println(student)
 
-	studentView := studentDatabase.GetStudentView(studentId)
+	studentView, err := studentDatabase.GetStudentView(ctx, studentId)
+	if err != nil {
+		log.Fatalln(err)
+	}
 	fmt.Println(studentView)
 }
