@@ -11,14 +11,7 @@ import (
 )
 
 func main() {
-	ctx := context.Background()
-	studentDatabase := student.NewDynamoDBDatabase(ctx)
-	student, err := studentDatabase.GetStudent(ctx, "d97a1ffc-a433-45d5-b44b-28c83a1ee131")
-	if err != nil {
-		log.Fatalln(err)
-	}
-	fmt.Println(student)
-	// useDynamoDBDatabase()
+	useDynamoDBDatabase()
 }
 
 func useDynamoDBDatabase() {

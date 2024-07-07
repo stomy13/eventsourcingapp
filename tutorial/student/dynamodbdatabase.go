@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/url"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -48,10 +49,50 @@ func NewDynamoDBDatabase(ctx context.Context) *DynamoDBDatabase {
 }
 
 func (d *DynamoDBDatabase) Append(ctx context.Context, event IEvent) error {
-	jsonStr, err := event.Json()
+	eventJson, err := event.Json()
 	if err != nil {
 		return err
 	}
+
+	// TODO: Use Transaction
+	// synchronous projection
+	// update student view
+	student, err := d.GetStudentView(ctx, event.StreamId())
+	if err != nil {
+		return err
+	}
+	// no student created
+	if student == nil {
+		k := fmt.Sprintf("%s%s", event.StreamId().String(), "_view")
+		student = &Student{
+			Pk: k,
+			Sk: k,
+		}
+	}
+	student.Apply(event)
+	studentJson, err := student.Json()
+	if err != nil {
+		return err
+	}
+
+	_, err = d.client.PutItem(ctx, &dynamodb.PutItemInput{
+		TableName: aws.String(d.tableName),
+		Item: map[string]types.AttributeValue{
+			"pk": &types.AttributeValueMemberS{
+				Value: student.Pk,
+			},
+			"sk": &types.AttributeValueMemberS{
+				Value: student.Sk,
+			},
+			"student": &types.AttributeValueMemberS{
+				Value: studentJson,
+			},
+		},
+	})
+	if err != nil {
+		return err
+	}
+
 	_, err = d.client.PutItem(ctx, &dynamodb.PutItemInput{
 		TableName: aws.String(d.tableName),
 		Item: map[string]types.AttributeValue{
@@ -62,7 +103,7 @@ func (d *DynamoDBDatabase) Append(ctx context.Context, event IEvent) error {
 				Value: event.Sk(),
 			},
 			"event": &types.AttributeValueMemberS{
-				Value: jsonStr,
+				Value: eventJson,
 			},
 		},
 	})
@@ -92,7 +133,7 @@ func (d *DynamoDBDatabase) GetStudent(ctx context.Context, studentId StudentId) 
 		return nil, err
 	}
 	if len(output.Items) == 0 {
-		return nil, errors.New("student not found")
+		return nil, nil
 	}
 
 	var events []IEvent
@@ -140,6 +181,33 @@ func (d *DynamoDBDatabase) GetStudent(ctx context.Context, studentId StudentId) 
 }
 
 func (d *DynamoDBDatabase) GetStudentView(ctx context.Context, studentId StudentId) (*Student, error) {
-	// TBI
-	return nil, nil
+	k := fmt.Sprintf("%s%s", studentId.String(), "_view")
+	output, err := d.client.GetItem(ctx, &dynamodb.GetItemInput{
+		TableName: aws.String(d.tableName),
+		Key: map[string]types.AttributeValue{
+			"pk": &types.AttributeValueMemberS{
+				Value: k,
+			},
+			"sk": &types.AttributeValueMemberS{
+				Value: k,
+			},
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	studentAttr := output.Item["student"]
+	if studentAttr == nil {
+		return nil, nil
+	}
+	studentAttrS, ok := studentAttr.(*types.AttributeValueMemberS)
+	if !ok {
+		return nil, errors.New("invalid student attribute")
+	}
+	student, err := NewStudentFromJson(studentAttrS.Value)
+	if err != nil {
+		return nil, err
+	}
+	return student, nil
 }
